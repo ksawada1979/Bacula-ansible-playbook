@@ -1,4 +1,5 @@
 ---
+
     - name: Install Packages
       yum: name={{ item }} state=latest
       with_items:
@@ -8,6 +9,7 @@
         - bacula-console
         - mysql-server
         - MySQL-python
+        - libselinux-python
 
     - name: Start and Enable mysql
       service: name=mysqld state=started enabled=yes
@@ -22,67 +24,73 @@
       command: /usr/libexec/bacula/make_bacula_tables -u bacula --password={{ dbpassword }}
 
     - name: Director Default Storage Address Change
-      command: sed -i -e "s/storage.example.com/{{ ipaddress }}/g" /etc/bacula/{{ item }}.conf
+      replace:
+        dest='/etc/bacula/{{ item }}.conf'
+        regexp='storage.example.com'
+        replace='{{ ipaddress }}'
       with_items:
         - bacula-dir
 
     - name: Director Default Client Address Change
-      command: sed -i -e "s/client.example.com/{{ ipaddress }}/g" /etc/bacula/{{ item }}.conf
+      replace:
+        dest='/etc/bacula/{{ item }}.conf'
+        regexp='client.example.com'
+        replace='{{ ipaddress }}'
       with_items:
         - bacula-dir
 
     - name: Director Default Password Change
-      command: sed -i -e "s/dbpassword = \"\"/dbpassword = \"{{ dbpassword }}\"/g" /etc/bacula/{{ item }}.conf
+      replace:
+        dest='/etc/bacula/{{ item }}.conf'
+        regexp='dbpassword = ""'
+        replace='dbpassword = "{{ dbpassword }}"'
       with_items:
         - bacula-dir
 
     - name: Director Default Password Change
-      command: sed -i -e "s/@@DIR_PASSWORD@@/bacula/g" /etc/bacula/{{ item }}.conf
+      replace:
+        dest='/etc/bacula/{{ item }}.conf'
+        regexp='@@DIR_PASSWORD@@'
+        replace='bacula'
       with_items:
-        - bacula-dir
-        - bacula-sd
-        - bacula-fd
+        - "{{ conf_name }}"
         - bconsole
 
     - name: SD Default Password Change
-      command: sed -i -e "s/@@SD_PASSWORD@@/bacula/g" /etc/bacula/bacula-{{ item }}.conf
-      with_items:
-        - dir
-        - sd
-        - fd
+      replace:
+        dest='/etc/bacula/{{ item }}.conf'
+        regexp='@@SD_PASSWORD@@'
+        replace='bacula'
+      with_items: conf_name
 
     - name: FD Default Password Change
-      command: sed -i -e "s/@@FD_PASSWORD@@/bacula/g" /etc/bacula/bacula-{{ item }}.conf
-      with_items:
-        - dir
-        - sd
-        - fd
-
+      replace:
+        dest='/etc/bacula/{{ item }}.conf'
+        regexp='@@FD_PASSWORD@@'
+        replace='bacula'
+      with_items: conf_name
 
     - name: MON DIR Default Password Change
-      command: sed -i -e "s/@@MON_DIR_PASSWORD@@/bacula/g" /etc/bacula/bacula-{{ item }}.conf
-      with_items:
-        - dir
-        - sd
-        - fd
+      replace:
+        dest='/etc/bacula/{{ item }}.conf'
+        regexp='@@MON_DIR_PASSWORD@@'
+        replace='bacula'
+      with_items: conf_name
 
     - name: MON SD Default Password Change
-      command: sed -i -e "s/@@MON_SD_PASSWORD@@/bacula/g" /etc/bacula/bacula-{{ item }}.conf
-      with_items:
-        - dir
-        - sd
-        - fd
+      replace:
+        dest='/etc/bacula/{{ item }}.conf'
+        regexp='@@MON_SD_PASSWORD@@'
+        replace='bacula'
+      with_items: conf_name
 
     - name: MON FD Default Password Change
-      command: sed -i -e "s/@@MON_FD_PASSWORD@@/bacula/g" /etc/bacula/bacula-{{ item }}.conf
-      with_items:
-        - dir
-        - sd
-        - fd
+      replace:
+        dest='/etc/bacula/{{ item }}.conf'
+        regexp='@@MON_FD_PASSWORD@@'
+        replace='bacula'
+      with_items: conf_name
 
     - name: Start and Enable bacula
       service: name={{ item }} state=started enabled=yes
-      with_items:
-        - bacula-dir
-        - bacula-sd
-        - bacula-fd
+      with_items: conf_name

@@ -1,3 +1,7 @@
 ---
     - name: Timezone Set
-      command: cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+      file: >
+        src=/usr/share/zoneinfo/Asia/Tokyo
+        dest=/etc/localtime
+        state=link
+        force=yes
